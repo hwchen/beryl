@@ -1,0 +1,34 @@
+use actix_web::{
+    http::Method,
+    middleware,
+    App,
+};
+
+use crate::handlers::{
+    api_default_handler,
+    api_handler,
+    index_handler,
+};
+use crate::schema::Schema;
+
+pub struct AppState {
+    schema: Schema,
+    debug: bool,
+}
+
+pub fn create_app(schema: Schema, debug: bool) -> App<AppState> {
+    let app = App::with_state(AppState { schema, debug })
+        .middleware(middleware::Logger::default())
+        .resource("/", |r| {
+            r.method(Method::GET).with(index_handler)
+        })
+        .resource("/api/{cube}", |r| {
+            r.method(Method::GET).with(api_default_handler)
+        })
+        .resource("/api/{cube}.{format}", |r| {
+            r.method(Method::GET).with(api_handler)
+        });
+
+    app
+}
+
