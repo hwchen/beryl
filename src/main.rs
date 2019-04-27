@@ -17,10 +17,10 @@ fn main() -> Result<(), Error> {
 
     let server_addr = opt.address.unwrap_or("127.0.0.1:9999".into());
 
-    let schema_path = std::env::var("DENEB_SCHEMA_FILEPATH")
+    let schema_path = std::env::var("BERYL_SCHEMA_FILEPATH")
         .unwrap_or("".into());
-        //.expect("DENEB_SCHEMA_FILEPATH not found");
-    let schema = Schema::from_path(&schema_path);
+        //.expect("BERYL_SCHEMA_FILEPATH not found");
+    let schema = Schema::from_path(&schema_path)?;
 
     let debug = false;
 
