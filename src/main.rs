@@ -21,6 +21,7 @@ fn main() -> Result<(), Error> {
         .unwrap_or("".into());
         //.expect("BERYL_SCHEMA_FILEPATH not found");
     let schema = Schema::from_path(&schema_path)?;
+    let schema_display = schema.clone();
 
     let debug = false;
 
@@ -36,6 +37,7 @@ fn main() -> Result<(), Error> {
     .start();
 
     println!("beryl listening on : {}", server_addr);
+    println!("beryl schema:\n{:#?}", schema_display);
 
     sys.run();
     Ok(())

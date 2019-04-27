@@ -1,12 +1,12 @@
 use failure::Error;
 use serde_derive::Deserialize;
 use serde_json;
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::fs;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Schema {
-    annotations: Option<HashMap<String, String>>,
+    annotations: Option<IndexMap<String, String>>,
     endpoints: Vec<Endpoint>,
 }
 
@@ -30,7 +30,7 @@ pub struct Endpoint {
 pub type KeyName = String;
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct Interface(HashMap<KeyName, KeyConfig>);
+pub struct Interface(IndexMap<KeyName, KeyConfig>);
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct KeyConfig {
