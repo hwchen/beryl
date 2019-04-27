@@ -7,6 +7,7 @@ use actix_web::{
 };
 use failure::Error;
 use futures::future::{self, Future};
+use indexmap::IndexMap;
 use lazy_static::lazy_static;
 use log::*;
 use serde_derive::{Serialize, Deserialize};
@@ -18,28 +19,28 @@ use crate::app::AppState;
 /// Handles default aggregation when a format is not specified.
 /// Default format is CSV.
 pub fn api_default_handler(
-    (req, cube): (HttpRequest<AppState>, Path<String>)
+    (req, endpoint): (HttpRequest<AppState>, Path<String>)
     ) -> FutureResponse<HttpResponse>
 {
-    let cube_format = (cube.into_inner(), "csv".to_owned());
-    do_api(req, cube_format)
+    let endpoint_format = (endpoint.into_inner(), "csv".to_owned());
+    do_api(req, endpoint_format)
 }
 
 /// Handles aggregation when a format is specified.
 pub fn api_handler(
-    (req, cube_format): (HttpRequest<AppState>, Path<(String, String)>)
+    (req, endpoint_format): (HttpRequest<AppState>, Path<(String, String)>)
     ) -> FutureResponse<HttpResponse>
 {
-    do_api(req, cube_format.into_inner())
+    do_api(req, endpoint_format.into_inner())
 }
 
 /// Performs data aggregation.
 pub fn do_api(
     req: HttpRequest<AppState>,
-    cube_format: (String, String),
+    endpoint_format: (String, String),
     ) -> FutureResponse<HttpResponse>
 {
-    let (cube, format) = cube_format;
+    let (endpoint, format) = endpoint_format;
 
     let format = format.parse::<FormatType>();
     let format = match format {
@@ -53,7 +54,7 @@ pub fn do_api(
         },
     };
 
-    info!("cube: {}, format: {:?}", cube, format);
+    info!("endpoint: {}, format: {:?}", endpoint, format);
 
     let query = req.query_string();
     lazy_static!{
@@ -94,10 +95,11 @@ pub fn do_api(
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ApiQueryOpt {
-    measures: Option<Vec<String>>,
-    filters: Option<Vec<String>>,
+    #[serde(flatten)]
+    interface: IndexMap<String,String>,
+
     sort: Option<String>,
-    limit: Option<String>,
+    limit: Option<String>, // includes offset
 }
 
 // Formatting: move to other mod
