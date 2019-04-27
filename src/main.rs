@@ -43,7 +43,7 @@ fn main() -> Result<(), Error> {
 
 /// CLI args
 #[derive(Debug, StructOpt)]
-#[structopt(name="tesseract")]
+#[structopt(name="beryl")]
 struct Opt {
     #[structopt(short="a", long="addr")]
     address: Option<String>,
