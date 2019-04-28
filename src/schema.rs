@@ -9,6 +9,9 @@ use std::fs;
 
 use schema_config::*;
 
+use crate::query::Query;
+use crate::query_ir::QueryIr;
+
 #[derive(Debug, Clone)]
 pub struct Schema {
     annotations: IndexMap<String, String>,
@@ -22,7 +25,22 @@ impl Schema {
 
         Ok(schema_config.into())
     }
+
+    pub fn gen_query_ir(
+        &self,
+        endpoint: &str,
+        query: &Query
+        ) -> Result<(QueryIr, Vec<String>), Error>
+    {
+        // checks
+
+        // query_ir
+
+        // headers
+        Ok((QueryIr{}, vec![]))
+    }
 }
+
 #[derive(Debug, Clone)]
 pub struct Endpoint{
     name: String,

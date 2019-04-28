@@ -15,7 +15,9 @@ use serde_qs as qs;
 use std::convert::{TryFrom, TryInto};
 
 use crate::app::AppState;
-use crate::format::FormatType;
+use crate::error::ServerError;
+use crate::format::{FormatType, format_records};
+use crate::query::Query;
 
 /// Handles default aggregation when a format is not specified.
 /// Default format is CSV.
@@ -74,24 +76,61 @@ pub fn do_api(
     };
     info!("query opts:{:?}", api_query);
 
-//    req.state()
-//        .backend
-//        .exec_sql(sql)
-//        .and_then(move |df| {
-//            match format_records(&headers, df, format) {
-//                Ok(res) => Ok(HttpResponse::Ok().body(res)),
-//                Err(err) => Ok(HttpResponse::NotFound().json(err.to_string())),
-//            }
-//        })
-//        .map_err(move |e| {
-//            if req.state().debug {
-//                ServerError::Db { cause: e.to_string() }.into()
-//            } else {
-//                ServerError::Db { cause: "Internal Server Error 1010".to_owned() }.into()
-//            }
-//        })
-//        .responder()
-    Box::new(future::ok(HttpResponse::Ok().body("test")))
+    // Turn ApiQueryOpt into Query
+    let query: Result<Query, _> = api_query.try_into();
+    let query = match query {
+        Ok(q) => q,
+        Err(err) => {
+            return Box::new(
+                future::result(
+                    Ok(HttpResponse::NotFound().json(err.to_string()))
+                )
+            );
+        },
+    };
+
+    // Turn Query into QueryIr and headers (Vec<String>)
+    let query_ir_headers = req
+        .state()
+        .schema
+        .gen_query_ir(&endpoint, &query);
+
+    let (query_ir, headers) = match query_ir_headers {
+        Ok(x) => x,
+        Err(err) => {
+            return Box::new(
+                future::result(
+                    Ok(HttpResponse::NotFound().json(err.to_string()))
+                )
+            );
+        },
+    };
+
+    let sql = req.state()
+        .backend
+        .generate_sql(query_ir);
+
+    info!("Sql query: {}", sql);
+    info!("Headers: {:?}", headers);
+
+    // Now pass request to backend
+    req.state()
+        .backend
+        .exec_sql(sql)
+        .and_then(move |df| {
+            match format_records(&headers, df, format) {
+                Ok(res) => Ok(HttpResponse::Ok().body(res)),
+                Err(err) => Ok(HttpResponse::NotFound().json(err.to_string())),
+            }
+        })
+        .map_err(move |e| {
+            if req.state().debug {
+                ServerError::Db { cause: e.to_string() }.into()
+            } else {
+                ServerError::Db { cause: "Internal Server Error 1010".to_owned() }.into()
+            }
+        })
+        .responder()
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -103,3 +142,10 @@ pub struct ApiQueryOpt {
     limit: Option<String>, // includes offset
 }
 
+impl TryFrom<ApiQueryOpt> for Query {
+    type Error = Error;
+
+    fn try_from(query_opt: ApiQueryOpt) -> Result<Self, Self::Error> {
+        Ok(Query {})
+    }
+}

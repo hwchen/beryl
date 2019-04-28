@@ -13,9 +13,9 @@ use crate::handlers::{
 use crate::schema::Schema;
 
 pub struct AppState {
-    schema: Schema,
-    backend: Box<Backend>,
-    debug: bool,
+    pub schema: Schema,
+    pub backend: Box<Backend>,
+    pub debug: bool,
 }
 
 pub fn create_app(schema: Schema, backend: Box<Backend>, debug: bool) -> App<AppState> {

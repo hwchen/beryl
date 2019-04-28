@@ -7,6 +7,7 @@ use std::time::{Duration, Instant};
 
 use crate::backend::Backend;
 use crate::dataframe::DataFrame;
+use crate::query_ir::QueryIr;
 
 mod df;
 mod sql;
@@ -58,8 +59,8 @@ impl Backend for Clickhouse {
         Box::new(fut)
     }
 
-    fn generate_sql(&self) -> String {
-        clickhouse_sql()
+    fn generate_sql(&self, query_ir: QueryIr) -> String {
+        clickhouse_sql(query_ir)
     }
 
     // https://users.rust-lang.org/t/solved-is-it-possible-to-clone-a-boxed-trait-object/1714/4

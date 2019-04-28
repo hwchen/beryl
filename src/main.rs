@@ -3,9 +3,12 @@ mod backend;
 mod clickhouse;
 mod db_config;
 mod dataframe;
+mod error;
 mod format;
 mod handlers;
 mod schema;
+mod query;
+mod query_ir;
 
 use actix;
 use actix_web::server;
