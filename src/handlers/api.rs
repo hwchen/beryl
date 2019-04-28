@@ -15,6 +15,7 @@ use serde_qs as qs;
 use std::convert::{TryFrom, TryInto};
 
 use crate::app::AppState;
+use crate::format::FormatType;
 
 /// Handles default aggregation when a format is not specified.
 /// Default format is CSV.
@@ -100,29 +101,5 @@ pub struct ApiQueryOpt {
 
     sort: Option<String>,
     limit: Option<String>, // includes offset
-}
-
-// Formatting: move to other mod
-
-use failure::format_err;
-
-#[derive(Debug, Clone)]
-enum FormatType {
-    Csv,
-    JsonRecords,
-    JsonArrays,
-}
-
-impl std::str::FromStr for FormatType {
-    type Err = Error;
-
-    fn  from_str(s: &str) -> Result< Self, Self::Err> {
-        match s {
-            "csv" =>         Ok(FormatType::Csv),
-            "jsonrecords" => Ok(FormatType::JsonRecords),
-            "jsonarrays" =>  Ok(FormatType::JsonArrays),
-            _ => Err(format_err!("Could not parse format type")),
-        }
-    }
 }
 

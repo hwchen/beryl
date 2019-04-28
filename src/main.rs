@@ -1,10 +1,15 @@
 mod app;
+mod backend;
+mod clickhouse;
+mod db_config;
+mod dataframe;
+mod format;
 mod handlers;
 mod schema;
 
 use actix;
 use actix_web::server;
-use failure::Error;
+use failure::{Error, format_err};
 use pretty_env_logger;
 use structopt::StructOpt;
 
@@ -25,19 +30,29 @@ fn main() -> Result<(), Error> {
 
     let debug = false;
 
+    // Database
+    let db_url_full = std::env::var("BERYL_DATABASE_URL")
+        .or(opt.database_url.ok_or(format_err!("")))
+        .map_err(|_| format_err!("database url not found; either BERYL_DATABASE_URL or cli option required"))?;
+
+    let (db, db_url, db_type) = db_config::get_db(&db_url_full)?;
+    let db_type_viz = db_type.clone();
+
     // initialize system and server
 
     let sys = actix::System::new("beryl");
 
     server::new(
-        move|| create_app(schema.clone(), debug)
+        move|| create_app(schema.clone(), db.clone(), debug)
     )
     .bind(&server_addr)
     .expect(&format!("cannot bind to {}", server_addr))
     .start();
 
     println!("beryl listening on : {}", server_addr);
-    println!("beryl schema:\n{:#?}", schema_display);
+    println!("beryl database:      {}, {}", db_url, db_type_viz);
+    println!("beryl schema path:   {}", schema_path);
+    //println!("beryl schema:\n{:#?}", schema_display);
 
     sys.run();
     Ok(())
@@ -49,4 +64,7 @@ fn main() -> Result<(), Error> {
 struct Opt {
     #[structopt(short="a", long="addr")]
     address: Option<String>,
+
+    #[structopt(long="db-url")]
+    database_url: Option<String>,
 }

@@ -4,6 +4,7 @@ use actix_web::{
     App,
 };
 
+use crate::backend::Backend;
 use crate::handlers::{
     api_default_handler,
     api_handler,
@@ -13,11 +14,12 @@ use crate::schema::Schema;
 
 pub struct AppState {
     schema: Schema,
+    backend: Box<Backend>,
     debug: bool,
 }
 
-pub fn create_app(schema: Schema, debug: bool) -> App<AppState> {
-    let app = App::with_state(AppState { schema, debug })
+pub fn create_app(schema: Schema, backend: Box<Backend>, debug: bool) -> App<AppState> {
+    let app = App::with_state(AppState { schema, backend, debug })
         .middleware(middleware::Logger::default())
         .resource("/", |r| {
             r.method(Method::GET).with(index_handler)
