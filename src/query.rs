@@ -24,7 +24,6 @@ pub struct FiltersQuery(pub IndexMap<String, FilterQuery>);
 
 #[derive(Debug, Clone)]
 pub struct FilterQuery {
-    pub name: String,
     pub constraint: Constraint,
 }
 
@@ -32,18 +31,11 @@ impl FromStr for FilterQuery {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match &s.split(",").collect::<Vec<_>>()[..] {
-            [name, constraint] => {
-                let name = name.to_string();
-                let constraint = constraint.parse::<Constraint>()?;
+        let constraint = s.parse::<Constraint>()?;
 
-                Ok(FilterQuery {
-                    name,
-                    constraint,
-                })
-            },
-            _ => bail!("Could not parse a filter query"),
-        }
+        Ok(FilterQuery {
+            constraint,
+        })
     }
 }
 #[derive(Debug, Clone)]
