@@ -136,7 +136,7 @@ pub fn do_api(
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ApiQueryOpt {
     #[serde(flatten)]
-    interface: IndexMap<String,String>,
+    filters: IndexMap<String,String>,
 
     sort: Option<String>,
     limit: Option<String>, // includes offset
@@ -146,6 +146,32 @@ impl TryFrom<ApiQueryOpt> for Query {
     type Error = Error;
 
     fn try_from(query_opt: ApiQueryOpt) -> Result<Self, Self::Error> {
-        Ok(Query {})
+        use crate::query::{
+            Query,
+            FilterQuery,
+            FiltersQuery,
+            Constraint,
+            Comparison,
+            LimitQuery,
+            SortQuery,
+            SortDirection,
+        };
+
+        let filters: Result<IndexMap<String, FilterQuery>, Error> = query_opt.filters
+            .iter()
+            .map(|(name, filter_query_opt)| {
+                Ok((name.clone(), filter_query_opt.parse()?))
+            })
+            .collect();
+        let filters = FiltersQuery(filters?);
+
+        let sort = query_opt.sort.map(|s| s.parse()).transpose()?;
+        let limit = query_opt.limit.map(|l| l.parse()).transpose()?;
+
+        Ok(Query {
+            filters,
+            sort,
+            limit,
+        })
     }
 }
