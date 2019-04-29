@@ -1,6 +1,6 @@
 mod schema_config;
 
-use failure::Error;
+use failure::{Error, format_err};
 use indexmap::IndexMap;
 use serde_derive::Deserialize;
 use serde_json;
@@ -10,7 +10,11 @@ use std::fs;
 use schema_config::*;
 
 use crate::query::Query;
-use crate::query_ir::QueryIr;
+use crate::query_ir::{
+    QueryIr,
+    FilterIr,
+    SortIr,
+};
 
 #[derive(Debug, Clone)]
 pub struct Schema {
@@ -32,12 +36,88 @@ impl Schema {
         query: &Query
         ) -> Result<(QueryIr, Vec<String>), Error>
     {
-        // checks
+        // checks?
 
         // query_ir
+        let schema_endpoint = self.endpoints
+            .iter()
+            .find(|ept| ept.name == endpoint)
+            .ok_or_else(|| format_err!("Couldn't find endpoint in schema"))?;
+
+        let table = schema_endpoint.sql_table.clone();
+
+        // projection is all interface names where visible is true
+        let projection = schema_endpoint.interface.0.iter()
+            .filter(|(_, param_value)| {
+                param_value.visible
+            })
+            .map(|(_, param_value)| {
+                param_value.column.clone()
+            })
+            .collect();
 
         // headers
-        Ok((QueryIr{}, vec![]))
+        let headers = schema_endpoint.interface.0.iter()
+            .filter(|(_, param_value)| {
+                param_value.visible
+            })
+            .map(|(param_key, _)| {
+                param_key.clone()
+            })
+            .collect();
+
+        let filters: Result<_, Error> = query.filters.0.iter()
+            .map(|(name, filter_query)| {
+                // name of query should match with
+                // name in interface
+                let column_and_filter_type: Result<_, Error> = schema_endpoint
+                    .interface
+                    .0.get(name)
+                    .map(|interface_param_value| {
+                        (interface_param_value.column.clone(),
+                         interface_param_value.filter_type.clone()
+                        )
+                    })
+                    .ok_or_else(|| format_err!("query filter name not in schema"));
+
+                let (column, filter_type) = column_and_filter_type?;
+
+                Ok(FilterIr {
+                    column,
+                    constraint: filter_query.constraint.clone(),
+                    filter_type,
+                })
+            })
+            .collect();
+        let filters = filters?;
+
+        let sort = if let Some(ref s) = query.sort {
+            let column = schema_endpoint
+                .interface
+                .0.get(&s.name)
+                .map(|interface_param_value| {
+                    interface_param_value.column.clone()
+                })
+                .ok_or_else(|| format_err!("query filter name not in schema"))?;
+
+            Some(SortIr {
+                direction: s.direction.clone(),
+                column,
+            })
+        } else {
+            None
+        };
+
+        Ok((
+            QueryIr{
+                table,
+                projection,
+                filters,
+                sort,
+                limit: query.limit.clone(),
+            },
+            headers
+        ))
     }
 }
 
