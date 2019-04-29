@@ -3,10 +3,13 @@
 "endpoints": [
   {
     "name": "stores",
+    "primary": "id",
     "sql_table": "test_beryl",
 
     "interface": {
-      "account": {},
+      "id": {
+        "column": "account"
+      },
       "city": {
         "column": "city_state",
         "is_text": true

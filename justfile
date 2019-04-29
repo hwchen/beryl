@@ -16,3 +16,4 @@ test:
     curl "127.0.0.1:9999/api/stores?limit=1"
     curl "127.0.0.1:9999/api/stores?limit=2,1"
     curl "127.0.0.1:9999/api/stores?sort=number_employees.asc"
+    curl "127.0.0.1:9999/api/stores/2"

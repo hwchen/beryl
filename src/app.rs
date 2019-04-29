@@ -8,6 +8,8 @@ use crate::backend::Backend;
 use crate::handlers::{
     api_default_handler,
     api_handler,
+    api_single_default_handler,
+    api_single_handler,
     index_handler,
 };
 use crate::schema::Schema;
@@ -24,11 +26,17 @@ pub fn create_app(schema: Schema, backend: Box<Backend>, debug: bool) -> App<App
         .resource("/", |r| {
             r.method(Method::GET).with(index_handler)
         })
-        .resource("/api/{cube}", |r| {
+        .resource("/api/{endpoint}", |r| {
             r.method(Method::GET).with(api_default_handler)
         })
-        .resource("/api/{cube}.{format}", |r| {
+        .resource("/api/{endpoint}.{format}", |r| {
             r.method(Method::GET).with(api_handler)
+        })
+        .resource("/api/{endpoint}/{id}", |r| {
+            r.method(Method::GET).with(api_single_default_handler)
+        })
+        .resource("/api/{endpoint}/{id}.{format}", |r| {
+            r.method(Method::GET).with(api_single_handler)
         });
 
     app

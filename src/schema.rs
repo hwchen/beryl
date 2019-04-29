@@ -18,8 +18,8 @@ use crate::query_ir::{
 
 #[derive(Debug, Clone)]
 pub struct Schema {
-    annotations: IndexMap<String, String>,
-    endpoints: Vec<Endpoint>,
+    pub annotations: IndexMap<String, String>,
+    pub endpoints: Vec<Endpoint>,
 }
 
 impl Schema {
@@ -123,9 +123,10 @@ impl Schema {
 
 #[derive(Debug, Clone)]
 pub struct Endpoint{
-    name: String,
-    sql_table: String,
-    interface: Interface,
+    pub name: String,
+    pub sql_table: String,
+    pub primary:Option<String>,
+    pub interface: Interface,
 }
 
 #[derive(Debug, Clone)]
@@ -172,6 +173,7 @@ impl From<EndpointConfig> for Endpoint {
         Endpoint {
             name: config.name,
             sql_table: config.sql_table,
+            primary: config.primary,
             interface: config.interface.into(),
         }
     }

@@ -16,6 +16,7 @@ pub struct SchemaConfig {
 pub struct EndpointConfig {
     pub name: String,
     pub sql_table: String,
+    pub primary: Option<String>,
     pub interface: InterfaceConfig,
 }
 
