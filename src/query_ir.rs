@@ -32,7 +32,7 @@ pub struct QueryIr {
 pub struct FilterIr {
     pub column: String,
     pub constraint: Constraint,
-    pub filter_type: FilterType,
+    pub is_text: bool,
 }
 
 #[derive(Debug, Clone)]

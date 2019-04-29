@@ -28,6 +28,7 @@ pub struct ParamValueConfig {
     pub filter_type: Option<FilterType>,
     pub visible: Option<bool>,
     pub dimension: Option<DimensionConfig>,
+    pub is_text: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

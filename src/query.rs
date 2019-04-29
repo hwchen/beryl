@@ -10,7 +10,7 @@
 //! directly produce a sql statement.
 //!
 
-use failure::{Error, bail};
+use failure::{Error, format_err, bail};
 use indexmap::IndexMap;
 use std::str::FromStr;
 
@@ -46,35 +46,78 @@ impl FromStr for FilterQuery {
         }
     }
 }
-// Constraint: less than, greater than a number
-// This is a little less straightforward, so we should
-// probably test this
 #[derive(Debug, Clone)]
-pub struct Constraint {
-    pub comparison: Comparison,
-    pub n: i64,
+pub enum Constraint {
+    Compare {
+        comparison: Comparison,
+        n: i64,
+    },
+    StringMatch {
+        substring: String,
+    },
+    InArray {
+        in_members: Vec<String>,
+        not_in_members: Vec<String>,
+    },
 }
 
-impl Constraint {
-    pub fn sql_string(&self) -> String {
-        format!("{} {}", self.comparison.sql_string(), self.n)
-    }
-}
+//impl Constraint {
+//    pub fn sql_string(&self) -> String {
+//        format!("{} {}", self.comparison.sql_string(), self.n)
+//    }
+//}
 
+// TODO: currently this is parsed directly from ApiQueryOpt.
+// Perhaps it's better to parse it at query_ir generation,
+// because with information from schema it would allow more
+// flexible syntax (ie not having to put an operator in front
+// of in_array_ and match constraints).
 impl FromStr for Constraint {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match &s.split(".").collect::<Vec<_>>()[..] {
-            [comparison, n] => {
+            [constraint_type, members] => {
+                match *constraint_type {
+                    "match" => {
+                        Ok(Constraint::StringMatch {
+                            substring: members.to_string(),
+                        })
+                    },
+                    "in_array" => {
+                        let mut in_members = vec![];
+                        let mut not_in_members = vec![];
 
-                let comparison = comparison.parse::<Comparison>()?;
-                let n = n.parse::<i64>()?;
+                        for member in members.split(",") {
+                            let leading_char = members.chars()
+                                .nth(0)
+                                .ok_or(format_err!("blank member not allowed"))?;
 
-                Ok(Constraint {
-                    comparison,
-                    n,
-                })
+                            if leading_char == '~' {
+                                let stripped_member = member.chars()
+                                    .skip(1)
+                                    .collect();
+                                not_in_members.push(stripped_member);
+                            } else {
+                                in_members.push(member.to_string());
+                            }
+                        }
+
+                        Ok(Constraint::InArray {
+                            in_members,
+                            not_in_members,
+                        })
+                    },
+                    _ => {
+                        let comparison = constraint_type.parse::<Comparison>()?;
+                        let n = members.parse::<i64>()?;
+
+                        Ok(Constraint::Compare {
+                            comparison,
+                            n,
+                        })
+                    },
+                }
             },
             _ => bail!("Could not parse a Constraint"),
         }

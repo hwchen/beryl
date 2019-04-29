@@ -70,22 +70,22 @@ impl Schema {
             .map(|(name, filter_query)| {
                 // name of query should match with
                 // name in interface
-                let column_and_filter_type: Result<_, Error> = schema_endpoint
+                let column_and_is_text: Result<_, Error> = schema_endpoint
                     .interface
                     .0.get(name)
                     .map(|interface_param_value| {
                         (interface_param_value.column.clone(),
-                         interface_param_value.filter_type.clone()
+                         interface_param_value.is_text.clone()
                         )
                     })
                     .ok_or_else(|| format_err!("query filter name not in schema"));
 
-                let (column, filter_type) = column_and_filter_type?;
+                let (column, is_text) = column_and_is_text?;
 
                 Ok(FilterIr {
                     column,
                     constraint: filter_query.constraint.clone(),
-                    filter_type,
+                    is_text,
                 })
             })
             .collect();
@@ -137,6 +137,7 @@ pub struct ParamValue {
     filter_type: FilterType,
     visible: bool,
     dimension: Option<Dimension>,
+    is_text: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -149,8 +150,8 @@ pub type ParamKey = String;
 
 #[derive(Debug, Clone, Deserialize)]
 pub enum FilterType {
-    #[serde(rename="numeric")]
-    Numeric,
+    #[serde(rename="compare")]
+    Compare,
     #[serde(rename="string_match")]
     StringMatch,
     #[serde(rename="in_array")]
@@ -184,9 +185,10 @@ impl From<InterfaceConfig> for Interface {
                 (param_key.clone(),
                  ParamValue {
                      column: p_config.column.clone().unwrap_or(param_key.to_owned()),
-                     filter_type: p_config.filter_type.clone().unwrap_or(FilterType::Numeric),
+                     filter_type: p_config.filter_type.clone().unwrap_or(FilterType::Compare),
                      visible: p_config.visible.unwrap_or(true),
                      dimension: p_config.dimension.clone().map(|d| d.into()),
+                     is_text: p_config.is_text.unwrap_or(false),
                  },
                 )
             }).collect();
