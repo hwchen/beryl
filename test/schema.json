@@ -1,0 +1,39 @@
+{
+"annotations": {},
+"endpoints": [
+  {
+    "name": "stores",
+    "sql_table": "test_beryl",
+
+    "interface": {
+      "account": {},
+      "city": {
+        "column": "city_state",
+        "is_text": true
+      },
+      "number_employees": {
+        "filter_type": "compare",
+        "column": "number_employees",
+        "is_text": false
+      },
+      "stocks_product": {
+        "filter_type": "in_array",
+        "column": "products",
+        "visible": false,
+        "is_text": true
+      },
+      "name": {
+        "filter_type": "string_match",
+        "column": "store_label",
+        "visible": true,
+        "is_text": true
+      },
+      "delivers": {
+        "filter_type": "string_match",
+        "column": "delivers",
+        "visible": false
+      }
+   }
+  }
+]
+}
