@@ -81,9 +81,10 @@ impl FromStr for Constraint {
                         let mut not_in_members = vec![];
 
                         for member in members.split(",") {
-                            let leading_char = members.chars()
+                            let leading_char = member.chars()
                                 .nth(0)
                                 .ok_or(format_err!("blank member not allowed"))?;
+                            println!("{}", leading_char);
 
                             if leading_char == '~' {
                                 let stripped_member = member.chars()

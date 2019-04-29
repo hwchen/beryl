@@ -67,6 +67,10 @@ pub fn clickhouse_sql(query_ir: QueryIr) -> String {
                                     )
                                 });
 
+                            if !in_members.is_empty() {
+                                res.push_str(" AND ");
+                            }
+
                             res.push_str(&format!("NOT hasAny({}, [{}])",
                                 f.column,
                                 join(ms, ", "),
