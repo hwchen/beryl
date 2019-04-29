@@ -1,5 +1,9 @@
 # Beryl
 
+An API server for read-only databases with simple configuration and flexible filtering.
+
+Supports clickhouse, with plans to support postgres and mysql.
+
 ## For Developers
 
 ### Dev Environment
