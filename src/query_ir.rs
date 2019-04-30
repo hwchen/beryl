@@ -7,14 +7,18 @@
 //! In some cases, the only difference is mapping a "name" in the interface
 //! to a column
 
+mod filter_ir;
+
 use crate::query::{
-    Constraint,
-    Comparison,
     LimitQuery,
     SortDirection
 };
 
-use crate::schema::FilterType;
+pub use self::filter_ir::{
+    FilterIr,
+    Constraint,
+    Comparison,
+};
 
 #[derive(Debug, Clone)]
 pub struct QueryIr {
@@ -26,13 +30,6 @@ pub struct QueryIr {
     pub sort: Option<SortIr>,
     pub limit: Option<LimitQuery>,
 //    dimension joins?
-}
-
-#[derive(Debug, Clone)]
-pub struct FilterIr {
-    pub column: String,
-    pub constraint: Constraint,
-    pub is_text: bool,
 }
 
 #[derive(Debug, Clone)]

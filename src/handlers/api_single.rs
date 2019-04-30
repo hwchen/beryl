@@ -5,25 +5,14 @@ use actix_web::{
     HttpResponse,
     Path,
 };
-use failure::{Error, format_err};
 use futures::future::{self, Future};
 use indexmap::IndexMap;
-use lazy_static::lazy_static;
 use log::*;
-use serde_derive::{Serialize, Deserialize};
-use serde_qs as qs;
-use std::convert::{TryFrom, TryInto};
 
 use crate::app::AppState;
 use crate::error::ServerError;
 use crate::format::{FormatType, format_records};
-use crate::query::{
-    Query,
-    Comparison,
-    Constraint,
-    FilterQuery,
-    FiltersQuery,
-};
+use crate::query::Query;
 
 /// Handles default aggregation when a format is not specified.
 /// Default format is CSV.
@@ -108,16 +97,11 @@ pub fn do_api_single(
     let mut filters = IndexMap::new();
     filters.insert(
         primary,
-        FilterQuery {
-            constraint: Constraint::Compare {
-                comparison: Comparison::Equal,
-                n: id,
-            }
-        },
+        format!("eq.{}", id),
     );
 
     let query = Query {
-        filters: FiltersQuery(filters),
+        filters: filters,
         sort: None,
         limit: None,
     };
@@ -166,45 +150,3 @@ pub fn do_api_single(
         .responder()
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct ApiQueryOpt {
-    #[serde(flatten)]
-    filters: IndexMap<String,String>,
-
-    sort: Option<String>,
-    limit: Option<String>, // includes offset
-}
-
-impl TryFrom<ApiQueryOpt> for Query {
-    type Error = Error;
-
-    fn try_from(query_opt: ApiQueryOpt) -> Result<Self, Self::Error> {
-        use crate::query::{
-            Query,
-            FilterQuery,
-            FiltersQuery,
-            Constraint,
-            Comparison,
-            LimitQuery,
-            SortQuery,
-            SortDirection,
-        };
-
-        let filters: Result<IndexMap<String, FilterQuery>, Error> = query_opt.filters
-            .iter()
-            .map(|(name, filter_query_opt)| {
-                Ok((name.clone(), filter_query_opt.parse()?))
-            })
-            .collect();
-        let filters = FiltersQuery(filters?);
-
-        let sort = query_opt.sort.map(|s| s.parse()).transpose()?;
-        let limit = query_opt.limit.map(|l| l.parse()).transpose()?;
-
-        Ok(Query {
-            filters,
-            sort,
-            limit,
-        })
-    }
-}

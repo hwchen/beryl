@@ -39,6 +39,7 @@ impl Schema {
         // checks?
 
         // query_ir
+        // =========================================
         let schema_endpoint = self.endpoints
             .iter()
             .find(|ept| ept.name == endpoint)
@@ -66,27 +67,11 @@ impl Schema {
             })
             .collect();
 
-        let filters: Result<_, Error> = query.filters.0.iter()
+        // filters are different, they need to also be parsed
+        // based on schematype here.
+        let filters: Result<_, Error> = query.filters.iter()
             .map(|(name, filter_query)| {
-                // name of query should match with
-                // name in interface
-                let column_and_is_text: Result<_, Error> = schema_endpoint
-                    .interface
-                    .0.get(name)
-                    .map(|interface_param_value| {
-                        (interface_param_value.column.clone(),
-                         interface_param_value.is_text.clone()
-                        )
-                    })
-                    .ok_or_else(|| format_err!("query filter name not in schema"));
-
-                let (column, is_text) = column_and_is_text?;
-
-                Ok(FilterIr {
-                    column,
-                    constraint: filter_query.constraint.clone(),
-                    is_text,
-                })
+                FilterIr::from_schema_query(name, filter_query, &schema_endpoint.interface)
             })
             .collect();
         let filters = filters?;
@@ -130,15 +115,15 @@ pub struct Endpoint{
 }
 
 #[derive(Debug, Clone)]
-pub struct Interface(IndexMap<ParamKey, ParamValue>);
+pub struct Interface(pub IndexMap<ParamKey, ParamValue>);
 
 #[derive(Debug, Clone)]
 pub struct ParamValue {
-    column: String,
-    filter_type: FilterType,
-    visible: bool,
-    dimension: Option<Dimension>,
-    is_text: bool,
+    pub column: String,
+    pub filter_type: FilterType,
+    pub visible: bool,
+    pub dimension: Option<Dimension>,
+    pub is_text: bool,
 }
 
 #[derive(Debug, Clone)]

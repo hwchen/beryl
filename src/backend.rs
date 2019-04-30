@@ -1,9 +1,8 @@
 use failure::Error;
-use futures::{Future, Stream};
+use futures::Future;
 
 use crate::dataframe::DataFrame;
 use crate::query_ir::QueryIr;
-use crate::schema::Schema;
 
 pub trait Backend {
     /// Takes in a SQL string, outputs a DataFrame, which will go on to be formatted into the
