@@ -26,17 +26,17 @@ pub fn create_app(schema: Schema, backend: Box<Backend>, debug: bool) -> App<App
         .resource("/", |r| {
             r.method(Method::GET).with(index_handler)
         })
-        .resource("/api/{endpoint}", |r| {
-            r.method(Method::GET).with(api_default_handler)
-        })
         .resource("/api/{endpoint}.{format}", |r| {
             r.method(Method::GET).with(api_handler)
         })
-        .resource("/api/{endpoint}/{id}", |r| {
-            r.method(Method::GET).with(api_single_default_handler)
+        .resource("/api/{endpoint}", |r| {
+            r.method(Method::GET).with(api_default_handler)
         })
         .resource("/api/{endpoint}/{id}.{format}", |r| {
             r.method(Method::GET).with(api_single_handler)
+        })
+        .resource("/api/{endpoint}/{id}", |r| {
+            r.method(Method::GET).with(api_single_default_handler)
         });
 
     app

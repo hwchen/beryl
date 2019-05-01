@@ -1,7 +1,7 @@
 use clickhouse_rs::Pool;
 use clickhouse_rs::types::Options;
-use failure::{Error, format_err};
-use futures::{future, Future, Stream};
+use failure::Error;
+use futures::Future;
 use log::*;
 use std::time::{Duration, Instant};
 

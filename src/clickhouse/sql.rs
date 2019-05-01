@@ -1,8 +1,6 @@
 use itertools::join;
 
-use crate::query::Constraint;
-use crate::query_ir::QueryIr;
-use crate::schema::Schema;
+use crate::query_ir::{QueryIr, Constraint};
 
 pub fn clickhouse_sql(query_ir: QueryIr) -> String {
     let project_cols_sql = join(query_ir.projection, ", ");

@@ -5,19 +5,17 @@ use actix_web::{
     HttpResponse,
     Path,
 };
-use failure::Error;
 use futures::future::{self, Future};
-use indexmap::IndexMap;
 use lazy_static::lazy_static;
 use log::*;
-use serde_derive::{Serialize, Deserialize};
 use serde_qs as qs;
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryInto;
 
 use crate::app::AppState;
 use crate::error::ServerError;
 use crate::format::{FormatType, format_records};
 use crate::query::Query;
+use super::api_shared::ApiQueryOpt;
 
 /// Handles default aggregation when a format is not specified.
 /// Default format is CSV.
@@ -133,45 +131,3 @@ pub fn do_api(
         .responder()
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct ApiQueryOpt {
-    #[serde(flatten)]
-    filters: IndexMap<String,String>,
-
-    sort: Option<String>,
-    limit: Option<String>, // includes offset
-}
-
-impl TryFrom<ApiQueryOpt> for Query {
-    type Error = Error;
-
-    fn try_from(query_opt: ApiQueryOpt) -> Result<Self, Self::Error> {
-        use crate::query::{
-            Query,
-            FilterQuery,
-            FiltersQuery,
-            Constraint,
-            Comparison,
-            LimitQuery,
-            SortQuery,
-            SortDirection,
-        };
-
-        let filters: Result<IndexMap<String, FilterQuery>, Error> = query_opt.filters
-            .iter()
-            .map(|(name, filter_query_opt)| {
-                Ok((name.clone(), filter_query_opt.parse()?))
-            })
-            .collect();
-        let filters = FiltersQuery(filters?);
-
-        let sort = query_opt.sort.map(|s| s.parse()).transpose()?;
-        let limit = query_opt.limit.map(|l| l.parse()).transpose()?;
-
-        Ok(Query {
-            filters,
-            sort,
-            limit,
-        })
-    }
-}
