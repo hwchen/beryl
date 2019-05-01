@@ -11,6 +11,8 @@ use crate::handlers::{
     api_single_default_handler,
     api_single_handler,
     index_handler,
+    metadata_all_handler,
+    metadata_handler,
 };
 use crate::schema::Schema;
 
@@ -25,6 +27,12 @@ pub fn create_app(schema: Schema, backend: Box<Backend>, debug: bool) -> App<App
         .middleware(middleware::Logger::default())
         .resource("/", |r| {
             r.method(Method::GET).with(index_handler)
+        })
+        .resource("/metadata", |r| {
+            r.method(Method::GET).with(metadata_all_handler)
+        })
+        .resource("/metadata/{endpoint}", |r| {
+            r.method(Method::GET).with(metadata_handler)
         })
         .resource("/api/{endpoint}.{format}", |r| {
             r.method(Method::GET).with(api_handler)
