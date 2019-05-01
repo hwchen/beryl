@@ -1,6 +1,6 @@
 use actix_web::{
     http::Method,
-    middleware,
+    middleware as actix_middleware,
     App,
 };
 
@@ -14,6 +14,7 @@ use crate::handlers::{
     metadata_all_handler,
     metadata_handler,
 };
+use crate::middleware;
 use crate::schema::Schema;
 
 pub struct AppState {
@@ -22,9 +23,24 @@ pub struct AppState {
     pub debug: bool,
 }
 
-pub fn create_app(schema: Schema, backend: Box<Backend>, debug: bool) -> App<AppState> {
+pub fn create_app(
+    schema: Schema,
+    backend: Box<Backend>,
+    api_key: Option<String>,
+    debug: bool
+    ) -> App<AppState>
+{
     let app = App::with_state(AppState { schema, backend, debug })
-        .middleware(middleware::Logger::default())
+        .middleware(actix_middleware::Logger::default());
+
+    let app = if let Some(ref key) = api_key {
+        app
+            .middleware(middleware::VerifyApiKey::new(key.clone()))
+    } else {
+        app
+    };
+
+    let app = app
         .resource("/", |r| {
             r.method(Method::GET).with(index_handler)
         })

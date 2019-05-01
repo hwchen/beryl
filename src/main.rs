@@ -6,13 +6,14 @@ mod dataframe;
 mod error;
 mod format;
 mod handlers;
+mod middleware;
 mod schema;
 mod query;
 mod query_ir;
 
 use actix;
 use actix_web::server;
-use failure::{Error, format_err};
+use failure::{Error, format_err, bail};
 use pretty_env_logger;
 use structopt::StructOpt;
 
@@ -32,6 +33,20 @@ fn main() -> Result<(), Error> {
 
     let debug = false;
 
+    // api key
+    // bails if api key value is not unicode.
+    // otherwise converts to an option.
+    let api_key = match std::env::var("BERYL_API_KEY") {
+        Ok(k) => Some(k),
+        Err(err) => {
+            match err {
+                std::env::VarError::NotUnicode (_)=> bail!("For BERYL_API_KEY: {}", err),
+                _ => None,
+            }
+        },
+    };
+    let with_api_key = api_key.is_some();
+
     // Database
     let db_url_full = std::env::var("BERYL_DATABASE_URL")
         .or(opt.database_url.ok_or(format_err!("")))
@@ -45,7 +60,7 @@ fn main() -> Result<(), Error> {
     let sys = actix::System::new("beryl");
 
     server::new(
-        move|| create_app(schema.clone(), db.clone(), debug)
+        move|| create_app(schema.clone(), db.clone(), api_key.clone(), debug)
     )
     .bind(&server_addr)
     .expect(&format!("cannot bind to {}", server_addr))
@@ -54,6 +69,10 @@ fn main() -> Result<(), Error> {
     println!("beryl listening on : {}", server_addr);
     println!("beryl database:      {}, {}", db_url, db_type_viz);
     println!("beryl schema path:   {}", schema_path);
+
+    if with_api_key {
+        println!("beryl using api key auth");
+    }
 
     sys.run();
     Ok(())
