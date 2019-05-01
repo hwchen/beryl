@@ -2,7 +2,7 @@ mod schema_config;
 
 use failure::{Error, format_err};
 use indexmap::IndexMap;
-use serde_derive::Deserialize;
+use serde_derive::{Deserialize, Serialize};
 use serde_json;
 use std::convert::From;
 use std::fs;
@@ -28,6 +28,11 @@ impl Schema {
         let schema_config: SchemaConfig = serde_json::from_str(&config_str)?;
 
         Ok(schema_config.into())
+    }
+    pub fn get_endpoint(&self, endpoint_path: &str) -> Option<Endpoint> {
+        self.endpoints.iter()
+            .find(|e| e.name == endpoint_path)
+            .cloned()
     }
 
     pub fn gen_query_ir(
@@ -134,7 +139,7 @@ pub struct Dimension{
 
 pub type ParamKey = String;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum FilterType {
     #[serde(rename="compare")]
     Compare,
