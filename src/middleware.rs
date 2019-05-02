@@ -19,25 +19,18 @@ impl VerifyApiKey {
 
 impl<S> Middleware<S> for VerifyApiKey {
     fn start(&self, req: &HttpRequest<S>) -> Result<Started> {
-        let secret_header = req.headers().get(X_BERYL_SECRET);
-
         let qp_secret_is_valid = {
             let qry = req.query();
-            let secret_query_param = qry.get(X_BERYL_SECRET);
+            let qp_secret = qry.get(X_BERYL_SECRET);
 
-            match secret_query_param {
-                Some(val) => val == &self.secret,
-                _ => false
-            }
+            qp_secret.map(|val| val == &self.secret)
+                .unwrap_or(false)
         };
 
-        let header_secret_is_valid = match secret_header {
-            Some(result_val) => match result_val.to_str() {
-                    Ok(val) => val == self.secret,
-                    _ => false
-            },
-            _ => false
-        };
+        let header_secret = req.headers().get(X_BERYL_SECRET);
+        let header_secret_is_valid = header_secret.map(|result_val| {
+            result_val.to_str().map(|val| val == self.secret).unwrap_or(false)
+        }).unwrap_or(false);
 
         if qp_secret_is_valid || header_secret_is_valid {
             Ok(Started::Done)
