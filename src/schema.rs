@@ -8,7 +8,7 @@ use std::convert::From;
 use std::fs;
 
 use schema_config::*;
-
+use crate::middleware::X_BERYL_SECRET;
 use crate::query::Query;
 use crate::query_ir::{
     QueryIr,
@@ -75,6 +75,9 @@ impl Schema {
         // filters are different, they need to also be parsed
         // based on schematype here.
         let filters: Result<_, Error> = query.filters.iter()
+            .filter(|(name, _)| {
+                name != &X_BERYL_SECRET
+            })
             .map(|(name, filter_query)| {
                 FilterIr::from_schema_query(name, filter_query, &schema_endpoint.interface)
             })
