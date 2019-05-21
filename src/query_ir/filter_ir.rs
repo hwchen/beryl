@@ -25,7 +25,7 @@ impl FilterIr {
                 match &filter_query.split(".").collect::<Vec<_>>()[..] {
                     [constraint_type, members] => {
                         let comparison = constraint_type.parse::<Comparison>()?;
-                        let n = members.parse::<i64>()?;
+                        let n = members.to_string();
 
                         Constraint::Compare {
                             comparison,
@@ -78,7 +78,7 @@ impl FilterIr {
 pub enum Constraint {
     Compare {
         comparison: Comparison,
-        n: i64,
+        n: String, // to allow all numbers
     },
     StringMatch {
         substring: String,
@@ -128,7 +128,7 @@ impl FromStr for Constraint {
                     },
                     _ => {
                         let comparison = constraint_type.parse::<Comparison>()?;
-                        let n = members.parse::<i64>()?;
+                        let n = members.to_string();
 
                         Ok(Constraint::Compare {
                             comparison,

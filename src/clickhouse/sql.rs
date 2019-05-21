@@ -10,8 +10,8 @@ pub fn clickhouse_sql(query_ir: QueryIr) -> String {
     let filter_sql = if !query_ir.filters.is_empty() {
         let filters = query_ir.filters.iter()
             .map(|f| {
-                match f.constraint {
-                    Constraint::Compare { ref comparison, n }=> {
+                match &f.constraint {
+                    Constraint::Compare { ref comparison, ref n }=> {
                         let single_quote = if f.is_text {
                             "'".to_owned()
                         } else {
