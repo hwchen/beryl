@@ -1,3 +1,5 @@
+#![feature(slice_patterns)]
+
 mod app;
 mod backend;
 mod clickhouse;

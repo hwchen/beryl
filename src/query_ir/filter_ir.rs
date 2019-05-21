@@ -1,4 +1,5 @@
 use failure::{Error, format_err, bail};
+use itertools::join;
 use std::str::FromStr;
 
 use crate::schema::{Interface, FilterType};
@@ -23,9 +24,9 @@ impl FilterIr {
         let constraint = match filter_type {
             FilterType::Compare => {
                 match &filter_query.split(".").collect::<Vec<_>>()[..] {
-                    [constraint_type, members] => {
+                    [constraint_type, members..] => {
                         let comparison = constraint_type.parse::<Comparison>()?;
-                        let n = members.to_string();
+                        let n = join(members, "."); // doesn't check for malformed
 
                         Constraint::Compare {
                             comparison,
@@ -94,16 +95,20 @@ impl FromStr for Constraint {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match &s.split(".").collect::<Vec<_>>()[..] {
-            [constraint_type, members] => {
+            [constraint_type, members..] => {
                 match *constraint_type {
                     "match" => {
+                        // rejoin on `.` for multiple periods
                         Ok(Constraint::StringMatch {
-                            substring: members.to_string(),
+                            substring: join(members, "."),
                         })
                     },
                     "in_array" => {
                         let mut in_members = vec![];
                         let mut not_in_members = vec![];
+
+                        // make sure that periods are rejoined before splitting on commas
+                        let members = join(members, ".");
 
                         for member in members.split(",") {
                             let leading_char = member.chars()
@@ -128,7 +133,7 @@ impl FromStr for Constraint {
                     },
                     _ => {
                         let comparison = constraint_type.parse::<Comparison>()?;
-                        let n = members.to_string();
+                        let n = join(members, ".");
 
                         Ok(Constraint::Compare {
                             comparison,
