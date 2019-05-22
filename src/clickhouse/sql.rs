@@ -11,18 +11,26 @@ pub fn clickhouse_sql(query_ir: QueryIr) -> String {
         let filters = query_ir.filters.iter()
             .map(|f| {
                 match &f.constraint {
-                    Constraint::Compare { ref comparison, ref n }=> {
-                        let single_quote = if f.is_text {
-                            "'".to_owned()
-                        } else {
-                            "".to_owned()
-                        };
-                        format!("{} {} {single_quote}{}{single_quote}",
-                            f.column,
-                            comparison.sql_string(),
-                            n,
-                            single_quote = single_quote,
-                        )
+                    Constraint::CompareList ( ref compare_list )=> {
+                        let comparisons = compare_list.iter()
+                            .map(|compare| {
+                                let comparison = &compare.comparison;
+                                let n = &compare.n;
+
+                                let single_quote = if f.is_text {
+                                    "'".to_owned()
+                                } else {
+                                    "".to_owned()
+                                };
+                                format!("{} {} {single_quote}{}{single_quote}",
+                                    f.column,
+                                    comparison.sql_string(),
+                                    n,
+                                    single_quote = single_quote,
+                                )
+                            });
+
+                        join(comparisons, " and ")
                     },
                     Constraint::ExactMatch { ref pattern } => {
                         let single_quote = if f.is_text {

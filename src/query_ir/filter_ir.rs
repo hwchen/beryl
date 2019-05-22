@@ -23,18 +23,25 @@ impl FilterIr {
 
         let constraint = match filter_type {
             FilterType::Compare => {
-                match &filter_query.split(".").collect::<Vec<_>>()[..] {
-                    [constraint_type, members..] => {
-                        let comparison = constraint_type.parse::<Comparison>()?;
-                        let n = join(members, "."); // doesn't check for malformed
+                // allow multiple comparisons, separated by commas
+                let comparisons = filter_query.split(",")
+                    .map(|one_comparison_str| {
+                        match &one_comparison_str.split(".").collect::<Vec<_>>()[..] {
+                            [constraint_type, members..] => {
+                                let comparison = constraint_type.parse::<Comparison>()?;
+                                let n = join(members, "."); // doesn't check for malformed
 
-                        Constraint::Compare {
-                            comparison,
-                            n,
+                                Ok(Compare {
+                                    comparison,
+                                    n,
+                                })
+                            },
+                            _ => Err(format_err!("Could not parse a Comparison for filter {}", name)),
                         }
-                    },
-                    _ => bail!("Could not parse a Comparison for filter {}", name),
-                }
+                    })
+                    .collect::<Result<Vec<_>,_>>()?;
+
+                Constraint::CompareList(comparisons)
             },
             FilterType::ExactMatch => {
                 Constraint::ExactMatch {
@@ -82,10 +89,7 @@ impl FilterIr {
 }
 #[derive(Debug, Clone)]
 pub enum Constraint {
-    Compare {
-        comparison: Comparison,
-        n: String, // to allow all numbers
-    },
+    CompareList(Vec<Compare>),
     ExactMatch {
         pattern: String,
     },
@@ -96,6 +100,12 @@ pub enum Constraint {
         in_members: Vec<String>,
         not_in_members: Vec<String>,
     },
+}
+
+#[derive(Debug, Clone)]
+pub struct Compare {
+    pub comparison: Comparison,
+    pub n: String, // to allow all numbers
 }
 
 #[derive(Debug, Clone)]
