@@ -46,9 +46,9 @@ pub fn clickhouse_sql(query_ir: QueryIr) -> String {
                         )
                     },
                     Constraint::StringMatch { ref substring } => {
-                        format!("{} LIKE '%{}%'",
+                        format!("lowerUTF8({}) LIKE '%{}%'",
                             f.column,
-                            substring,
+                            substring.to_lowercase(),
                         )
                     },
                     Constraint::InArray { ref in_members, ref not_in_members } => {
