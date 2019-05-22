@@ -24,6 +24,19 @@ pub fn clickhouse_sql(query_ir: QueryIr) -> String {
                             single_quote = single_quote,
                         )
                     },
+                    Constraint::ExactMatch { ref pattern } => {
+                        let single_quote = if f.is_text {
+                            "'".to_owned()
+                        } else {
+                            "".to_owned()
+                        };
+                        format!("{} = {}{}{}",
+                            f.column,
+                            single_quote,
+                            pattern,
+                            single_quote,
+                        )
+                    },
                     Constraint::StringMatch { ref substring } => {
                         format!("{} LIKE '%{}%'",
                             f.column,

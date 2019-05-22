@@ -146,6 +146,8 @@ pub type ParamKey = String;
 pub enum FilterType {
     #[serde(rename="compare")]
     Compare,
+    #[serde(rename="exact_match")]
+    ExactMatch,
     #[serde(rename="string_match")]
     StringMatch,
     #[serde(rename="in_array")]

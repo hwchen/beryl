@@ -36,6 +36,11 @@ impl FilterIr {
                     _ => bail!("Could not parse a Comparison for filter {}", name),
                 }
             },
+            FilterType::ExactMatch => {
+                Constraint::ExactMatch {
+                    pattern: filter_query.to_owned(),
+                }
+            },
             FilterType::StringMatch => {
                 Constraint::StringMatch {
                     substring: filter_query.to_owned(),
@@ -81,6 +86,9 @@ pub enum Constraint {
         comparison: Comparison,
         n: String, // to allow all numbers
     },
+    ExactMatch {
+        pattern: String,
+    },
     StringMatch {
         substring: String,
     },
@@ -88,63 +96,6 @@ pub enum Constraint {
         in_members: Vec<String>,
         not_in_members: Vec<String>,
     },
-}
-
-impl FromStr for Constraint {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match &s.split(".").collect::<Vec<_>>()[..] {
-            [constraint_type, members..] => {
-                match *constraint_type {
-                    "match" => {
-                        // rejoin on `.` for multiple periods
-                        Ok(Constraint::StringMatch {
-                            substring: join(members, "."),
-                        })
-                    },
-                    "in_array" => {
-                        let mut in_members = vec![];
-                        let mut not_in_members = vec![];
-
-                        // make sure that periods are rejoined before splitting on commas
-                        let members = join(members, ".");
-
-                        for member in members.split(",") {
-                            let leading_char = member.chars()
-                                .nth(0)
-                                .ok_or(format_err!("blank member not allowed"))?;
-                            println!("{}", leading_char);
-
-                            if leading_char == '~' {
-                                let stripped_member = member.chars()
-                                    .skip(1)
-                                    .collect();
-                                not_in_members.push(stripped_member);
-                            } else {
-                                in_members.push(member.to_string());
-                            }
-                        }
-
-                        Ok(Constraint::InArray {
-                            in_members,
-                            not_in_members,
-                        })
-                    },
-                    _ => {
-                        let comparison = constraint_type.parse::<Comparison>()?;
-                        let n = join(members, ".");
-
-                        Ok(Constraint::Compare {
-                            comparison,
-                            n,
-                        })
-                    },
-                }
-            },
-            _ => bail!("Could not parse a Constraint"),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
