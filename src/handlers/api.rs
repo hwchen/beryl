@@ -122,7 +122,7 @@ pub fn do_api(
             }
         })
         .map_err(move |e| {
-            error!("{}", e.to_string());
+            error!("{}, {}", e.to_string(), e.as_fail());
 
             if req.state().debug {
                 ServerError::Db { cause: e.to_string() }.into()
