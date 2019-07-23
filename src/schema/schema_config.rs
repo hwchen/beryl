@@ -42,9 +42,11 @@ pub struct DimensionConfig {
 
 #[derive(Debug, Clone, Deserialize)]
 pub enum SqlSelectConfig {
+    #[serde(rename="table")]
     Table {
         name: String,
     },
+    #[serde(rename="template")]
     Template {
         template_path: String,
     },
