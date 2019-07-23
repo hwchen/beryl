@@ -3,6 +3,8 @@ use actix_web::{
     middleware as actix_middleware,
     App,
 };
+use std::sync::{Arc, RwLock};
+use tera::Tera;
 
 use crate::backend::Backend;
 use crate::handlers::{
@@ -20,17 +22,19 @@ use crate::schema::Schema;
 pub struct AppState {
     pub schema: Schema,
     pub backend: Box<Backend>,
+    pub sql_templates: Option<Arc<RwLock<Tera>>>,
     pub debug: bool,
 }
 
 pub fn create_app(
     schema: Schema,
     backend: Box<Backend>,
+    sql_templates: Option<Arc<RwLock<Tera>>>,
     api_key: Option<String>,
     debug: bool
     ) -> App<AppState>
 {
-    let app = App::with_state(AppState { schema, backend, debug })
+    let app = App::with_state(AppState { schema, backend, sql_templates, debug })
         .middleware(actix_middleware::Logger::default());
 
     let app = if let Some(ref key) = api_key {

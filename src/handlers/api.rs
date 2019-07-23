@@ -91,7 +91,7 @@ pub fn do_api(
     let query_ir_headers = req
         .state()
         .schema
-        .gen_query_ir(&endpoint, &query);
+        .gen_query_ir(&endpoint, &query, &req.state().sql_templates);
 
     let (query_ir, headers) = match query_ir_headers {
         Ok(x) => x,

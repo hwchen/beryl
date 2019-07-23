@@ -17,10 +17,12 @@ use actix;
 use actix_web::server;
 use failure::{Error, format_err, bail};
 use pretty_env_logger;
+use std::sync::{Arc, RwLock};
 use structopt::StructOpt;
+use tera::compile_templates;
 
 use crate::app::create_app;
-use crate::schema::Schema;
+use crate::schema::{Schema, SqlSelect};
 
 fn main() -> Result<(), Error> {
     pretty_env_logger::init();
@@ -32,6 +34,28 @@ fn main() -> Result<(), Error> {
         .unwrap_or("".into());
         //.expect("BERYL_SCHEMA_FILEPATH not found");
     let schema = Schema::from_path(&schema_path)?;
+
+    // templates. Needed only if there's any route in api that
+    // requires template.
+    // TODO handle missing path logic v needing templates logic better
+    let templates_path = std::env::var("BERYL_TEMPLATES_PATH")
+        .unwrap_or("".into());
+
+    let uses_templates = schema.endpoints.iter()
+        .any(|endpoint| {
+            match endpoint.sql_select {
+                SqlSelect::Template { .. } => true,
+                _ => false,
+            }
+        });
+
+    let sql_templates = if uses_templates {
+        Some(Arc::new(RwLock::new(
+            compile_templates!(&(templates_path.trim_end_matches("/").to_owned() + "/**/*"))
+        )))
+    } else {
+        None
+    };
 
     let debug = false;
 
@@ -62,7 +86,7 @@ fn main() -> Result<(), Error> {
     let sys = actix::System::new("beryl");
 
     server::new(
-        move|| create_app(schema.clone(), db.clone(), api_key.clone(), debug)
+        move|| create_app(schema.clone(), db.clone(), sql_templates.clone(), api_key.clone(), debug)
     )
     .bind(&server_addr)
     .expect(&format!("cannot bind to {}", server_addr))
