@@ -40,3 +40,12 @@ Run tests against test server
 ```
 $ just test
 ```
+
+#### sql templates
+special feature! totally in alpha.
+
+In the schema, for and endpoint you can specify a sql template instead of a table name. This template uses Tera to render, which uses a jinja2 inspired syntax.
+
+The vars in the sql template must match the param name in the endpoint's interface. That param must also have the field `"is_template_var": true`, and the 'filter_type' must be set to `exact_match` or `string_match`. The sql itself must handle the quotes around a string type.
+
+Then, when using that endpoint, those params which were specified as template vars must be used in the query params, otherwise the template will fail to render.

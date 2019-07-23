@@ -2,6 +2,7 @@ mod schema_config;
 
 use failure::{Error, bail, format_err};
 use indexmap::IndexMap;
+use log::warn;
 use serde_derive::{Deserialize, Serialize};
 use serde_json;
 use std::convert::From;
@@ -85,10 +86,17 @@ impl Schema {
                 }
 
                 if let Some(tera) = sql_templates {
-                    tera.read()
+                    let sql = tera.read()
                         .expect("poison lock on tera")
                         .render(&template_path, &context)
-                        .map_err(|e| format_err!("{}", e))?
+                        .map_err(|err| {
+                            warn!("{}, please check template vars match endpoint \
+                                interface param; or query may not be using those params",
+                                err,
+                            );
+                            format_err!("Please check that params {:?} are used", template_vars)
+                        })?;
+                    format!("({})", sql)
                 } else {
                     bail!("Could not render sql template");
                 }
