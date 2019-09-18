@@ -4,7 +4,7 @@
   {
     "name": "stores",
     "primary": "id",
-    "sql_table": "test_beryl",
+    "sql_select": { "table": { "name": "test_beryl" }},
 
     "interface": {
       "id": {
