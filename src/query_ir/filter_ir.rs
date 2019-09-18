@@ -27,7 +27,7 @@ impl FilterIr {
                 let comparisons = filter_query.split(",")
                     .map(|one_comparison_str| {
                         match &one_comparison_str.split(".").collect::<Vec<_>>()[..] {
-                            [constraint_type, members..] => {
+                            [constraint_type, members @ ..] => {
                                 let comparison = constraint_type.parse::<Comparison>()?;
                                 let n = join(members, "."); // doesn't check for malformed
 
