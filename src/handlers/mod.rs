@@ -3,6 +3,7 @@ mod api_shared;
 mod api_single;
 mod index;
 mod metadata;
+mod util;
 
 pub use api::api_default_handler;
 pub use api::api_handler;

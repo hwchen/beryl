@@ -16,6 +16,8 @@ use crate::error::ServerError;
 use crate::format::{FormatType, format_records};
 use crate::query::Query;
 use super::api_shared::ApiQueryOpt;
+use super::util;
+
 
 /// Handles default aggregation when a format is not specified.
 /// Default format is CSV.
@@ -27,6 +29,7 @@ pub fn api_default_handler(
     do_api(req, endpoint_format)
 }
 
+
 /// Handles aggregation when a format is specified.
 pub fn api_handler(
     (req, endpoint_format): (HttpRequest<AppState>, Path<(String, String)>)
@@ -34,6 +37,7 @@ pub fn api_handler(
 {
     do_api(req, endpoint_format.into_inner())
 }
+
 
 /// Performs data aggregation.
 pub fn do_api(
@@ -116,8 +120,12 @@ pub fn do_api(
         .backend
         .exec_sql(sql)
         .and_then(move |df| {
+            let content_type = util::format_to_content_type(&format);
+
             match format_records(&headers, df, format) {
-                Ok(res) => Ok(HttpResponse::Ok().body(res)),
+                Ok(res) => Ok(HttpResponse::Ok()
+                    .set(content_type)
+                    .body(res)),
                 Err(err) => Ok(HttpResponse::NotFound().json(err.to_string())),
             }
         })
