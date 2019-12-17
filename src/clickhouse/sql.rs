@@ -2,16 +2,18 @@ use itertools::join;
 
 use crate::query_ir::{QueryIr, Constraint};
 
-pub fn clickhouse_sql(query_ir: QueryIr) -> String {
+pub fn clickhouse_sql(query_ir: QueryIr) -> Vec<String> {
     let project_cols_sql = join(query_ir.projection, ", ");
 
     let table = query_ir.table;
+
+    let table_count_sql = format!("SELECT count(*) FROM {}", table);
 
     let filter_sql = if !query_ir.filters.is_empty() {
         let filters = query_ir.filters.iter()
             .map(|f| {
                 match &f.constraint {
-                    Constraint::CompareList ( ref compare_list )=> {
+                    Constraint::CompareList(ref compare_list) => {
                         let comparisons = compare_list.iter()
                             .map(|compare| {
                                 let comparison = &compare.comparison;
@@ -23,10 +25,10 @@ pub fn clickhouse_sql(query_ir: QueryIr) -> String {
                                     "".to_owned()
                                 };
                                 format!("{} {} {single_quote}{}{single_quote}",
-                                    f.column,
-                                    comparison.sql_string(),
-                                    n,
-                                    single_quote = single_quote,
+                                        f.column,
+                                        comparison.sql_string(),
+                                        n,
+                                        single_quote = single_quote,
                                 )
                             });
 
@@ -39,16 +41,16 @@ pub fn clickhouse_sql(query_ir: QueryIr) -> String {
                             "".to_owned()
                         };
                         format!("{} = {}{}{}",
-                            f.column,
-                            single_quote,
-                            pattern,
-                            single_quote,
+                                f.column,
+                                single_quote,
+                                pattern,
+                                single_quote,
                         )
                     },
                     Constraint::StringMatch { ref substring } => {
                         format!("lowerUTF8({}) LIKE '%{}%'",
-                            f.column,
-                            substring.to_lowercase(),
+                                f.column,
+                                substring.to_lowercase(),
                         )
                     },
                     Constraint::InArray { ref in_members, ref not_in_members } => {
@@ -64,15 +66,15 @@ pub fn clickhouse_sql(query_ir: QueryIr) -> String {
                                 .iter()
                                 .map(|m| {
                                     format!("{}{}{}",
-                                        single_quote,
-                                        m,
-                                        single_quote,
+                                            single_quote,
+                                            m,
+                                            single_quote,
                                     )
                                 });
 
                             res.push_str(&format!("hasAll({}, [{}])",
-                                f.column,
-                                join(ms, ", "),
+                                                  f.column,
+                                                  join(ms, ", "),
                             ));
                         };
                         if !not_in_members.is_empty() {
@@ -80,9 +82,9 @@ pub fn clickhouse_sql(query_ir: QueryIr) -> String {
                                 .iter()
                                 .map(|m| {
                                     format!("{}{}{}",
-                                        single_quote,
-                                        m,
-                                        single_quote,
+                                            single_quote,
+                                            m,
+                                            single_quote,
                                     )
                                 });
 
@@ -91,8 +93,8 @@ pub fn clickhouse_sql(query_ir: QueryIr) -> String {
                             }
 
                             res.push_str(&format!("NOT hasAny({}, [{}])",
-                                f.column,
-                                join(ms, ", "),
+                                                  f.column,
+                                                  join(ms, ", "),
                             ));
                         };
 
@@ -108,8 +110,10 @@ pub fn clickhouse_sql(query_ir: QueryIr) -> String {
         "".into()
     };
 
+    let filter_count_sql = format!("SELECT count(*) FROM {} {}", table, filter_sql);
+
     let sort_sql = if let Some(srt) = query_ir.sort {
-        format!("order by {} {}",
+        format!("ORDER BY {} {}",
                 srt.column,
                 srt.direction.sql_string(),
         )
@@ -120,20 +124,24 @@ pub fn clickhouse_sql(query_ir: QueryIr) -> String {
     let limit_sql = {
         if let Some(lmt) = query_ir.limit {
             if let Some(offset) = lmt.offset {
-                format!("limit {}, {}", offset, lmt.n)
+                format!("LIMIT {}, {}", offset, lmt.n)
             } else {
-                format!("limit {}", lmt.n)
+                format!("LIMIT {}", lmt.n)
             }
         } else {
             "".to_string()
         }
     };
 
-    format!("select {} from {} {} {} {}",
-        project_cols_sql,
-        table,
-        filter_sql,
-        sort_sql,
-        limit_sql,
-    )
+    vec![
+        table_count_sql,
+        filter_count_sql,
+        format!("SELECT {} FROM {} {} {} {}",
+                project_cols_sql,
+                table,
+                filter_sql,
+                sort_sql,
+                limit_sql,
+        )
+    ]
 }
