@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DataFrame {
     pub columns: Vec<Column>,
 }
@@ -48,7 +48,7 @@ impl DataFrame {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Column {
     pub name: String,
     pub column_data: ColumnData,
@@ -67,7 +67,7 @@ impl Column {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ColumnData {
     Int8(Vec<i8>),
     Int16(Vec<i16>),
