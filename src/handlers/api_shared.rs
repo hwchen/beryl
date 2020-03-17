@@ -5,6 +5,7 @@ use std::convert::TryFrom;
 
 use crate::query::Query;
 
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ApiQueryOpt {
     #[serde(flatten)]
@@ -13,6 +14,7 @@ pub struct ApiQueryOpt {
     sort: Option<String>,
     limit: Option<String>, // includes offset
 }
+
 
 impl TryFrom<ApiQueryOpt> for Query {
     type Error = Error;
@@ -31,4 +33,3 @@ impl TryFrom<ApiQueryOpt> for Query {
         })
     }
 }
-

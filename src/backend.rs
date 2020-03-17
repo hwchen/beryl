@@ -11,9 +11,9 @@ pub trait Backend {
 
     fn box_clone(&self) -> Box<dyn Backend + Send + Sync>;
 
-    /// takes &self, but only required to be able to trun Backend into
+    /// takes &self, but only required to be able to turn Backend into
     /// a trait object. It's not needed for any of the logic
-    fn generate_sql(&self, query_ir: QueryIr) -> String;
+    fn generate_sql(&self, query_ir: QueryIr) -> Vec<String>;
 }
 
 impl Clone for Box<dyn Backend + Send + Sync> {

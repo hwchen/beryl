@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use actix_web::{
     AsyncResponder,
     FutureResponse,
@@ -5,17 +7,21 @@ use actix_web::{
     HttpResponse,
     Path,
 };
-use futures::future::{self, Future};
+use failure::Error;
+use futures::future::{self, *};
 use lazy_static::lazy_static;
 use log::*;
 use serde_qs as qs;
 use std::convert::TryInto;
 
 use crate::app::AppState;
+use crate::dataframe::{DataFrame, Column, ColumnData};
 use crate::error::ServerError;
 use crate::format::{FormatType, format_records};
 use crate::query::Query;
 use super::api_shared::ApiQueryOpt;
+use super::util;
+
 
 /// Handles default aggregation when a format is not specified.
 /// Default format is CSV.
@@ -27,6 +33,7 @@ pub fn api_default_handler(
     do_api(req, endpoint_format)
 }
 
+
 /// Handles aggregation when a format is specified.
 pub fn api_handler(
     (req, endpoint_format): (HttpRequest<AppState>, Path<(String, String)>)
@@ -34,6 +41,7 @@ pub fn api_handler(
 {
     do_api(req, endpoint_format.into_inner())
 }
+
 
 /// Performs data aggregation.
 pub fn do_api(
@@ -72,6 +80,7 @@ pub fn do_api(
             );
         },
     };
+
     info!("query opts:{:?}", api_query);
 
     // Turn ApiQueryOpt into Query
@@ -104,20 +113,54 @@ pub fn do_api(
         },
     };
 
-    let sql = req.state()
+    let sql_queries = req.state()
         .backend
         .generate_sql(query_ir);
 
-    info!("Sql query: {}", sql);
     info!("Headers: {:?}", headers);
 
-    // Now pass request to backend
-    req.state()
-        .backend
-        .exec_sql(sql)
-        .and_then(move |df| {
-            match format_records(&headers, df, format) {
-                Ok(res) => Ok(HttpResponse::Ok().body(res)),
+    // Joins all the futures for each TsQuery
+    let futs: JoinAll<Vec<Box<dyn Future<Item=DataFrame, Error=Error>>>> = join_all(sql_queries
+        .iter()
+        .map(|sql| {
+            info!("Sql query: {}", sql);
+
+            req.state()
+                .backend
+                .exec_sql(sql.clone())
+        })
+        .collect()
+    );
+
+    // Process data received once all futures are resolved and return response
+    futs
+        .and_then(move |dfs| {
+            let table_count = match dfs.get(0) {
+                Some(df) => get_count(df),
+                None => return Ok(HttpResponse::NotFound().json("Unable to get table count.".to_string()))
+            };
+
+            let filter_count = match dfs.get(1) {
+                Some(df) => get_count(df),
+                None => return Ok(HttpResponse::NotFound().json("Unable to get filter count.".to_string()))
+            };
+
+            let mut metadata = HashMap::new();
+
+            metadata.insert("table_count".to_string(), table_count);
+            metadata.insert("filter_count".to_string(), filter_count);
+
+            let df = match dfs.get(2) {
+                Some(df) => df.clone(),
+                None => return Ok(HttpResponse::NotFound().json("Unable to get data.".to_string()))
+            };
+
+            let content_type = util::format_to_content_type(&format);
+
+            match format_records(&headers, df, format, metadata) {
+                Ok(res) => Ok(HttpResponse::Ok()
+                    .set(content_type)
+                    .body(res)),
                 Err(err) => Ok(HttpResponse::NotFound().json(err.to_string())),
             }
         })
@@ -133,3 +176,15 @@ pub fn do_api(
         .responder()
 }
 
+
+fn get_count(df: &DataFrame) -> u64 {
+    match &df.columns[0].column_data {
+        ColumnData::UInt64(data)=> {
+            data[0]
+        },
+        _ => {
+            // Should never get here as counts will always return UInt64
+            0
+        }
+    }
+}

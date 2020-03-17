@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use csv;
 use failure::{Error, format_err};
 use indexmap::IndexMap;
@@ -28,10 +30,15 @@ impl std::str::FromStr for FormatType {
 }
 
 /// Wrapper to format `DataFrame` to the desired output format.
-pub fn format_records(headers: &[String], df: DataFrame, format_type: FormatType) -> Result<String, Error> {
+pub fn format_records(
+    headers: &[String],
+    df: DataFrame,
+    format_type: FormatType,
+    metadata: HashMap<String, u64>
+) -> Result<String, Error> {
     match format_type {
         FormatType::Csv => Ok(format_csv(headers, df)?),
-        FormatType::JsonRecords => Ok(format_jsonrecords(headers, df)?),
+        FormatType::JsonRecords => Ok(format_jsonrecords(headers, df, metadata)?),
         FormatType::JsonArrays => Ok(format_jsonarrays(headers, df)?),
     }
 }
@@ -87,7 +94,7 @@ fn format_csv(headers: &[String], df: DataFrame) -> Result<String, Error> {
 }
 
 /// Formats response `DataFrame` to JSON records.
-fn format_jsonrecords(headers: &[String], df: DataFrame) -> Result<String, Error> {
+fn format_jsonrecords(headers: &[String], df: DataFrame, metadata: HashMap<String, u64>) -> Result<String, Error> {
     // use streaming serializer
     // Necessary because this way we don't create a huge vec of rows containing Value
     // (very expensive)
@@ -106,7 +113,6 @@ fn format_jsonrecords(headers: &[String], df: DataFrame) -> Result<String, Error
     );
 
     let mut seq = ser.serialize_seq(Some(df.len()))?;
-
 
     // write data
     for row_idx in 0..df.len() {
@@ -145,14 +151,16 @@ fn format_jsonrecords(headers: &[String], df: DataFrame) -> Result<String, Error
 
     seq.end()?;
     let mut res = String::from_utf8(ser.into_inner())?;
+
+    let metadata_string = serde_json::to_string(&metadata)?;
+
+    if metadata_string != "null" {
+        res.push_str(",\n\"metadata\": ");
+        res.push_str(&metadata_string);
+    }
+
     res.push('}');
     Ok(res)
-
-//    let res = json!({
-//        "data": rows,
-//    });
-//
-//    Ok(res.to_string())
 }
 
 /// Formats response `DataFrame` to JSON arrays.
@@ -220,7 +228,7 @@ fn format_jsonarrays(headers: &[String], df: DataFrame) -> Result<String, Error>
             row.push(val);
         }
 
-        seq_data.serialize_element(&row)?;;
+        seq_data.serialize_element(&row)?;
     }
 
     seq_data.end()?;
@@ -229,9 +237,4 @@ fn format_jsonarrays(headers: &[String], df: DataFrame) -> Result<String, Error>
     let mut res = String::from_utf8(ser.into_inner())?;
     res.push('}');
     Ok(res)
-
-//    let res = json!({
-//        "headers": headers,
-//        "data": rows,
-//    });
 }
