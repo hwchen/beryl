@@ -1,5 +1,5 @@
 use clickhouse_rs::Pool;
-use clickhouse_rs::types::Options;
+use clickhouse_rs::types::{Options, Simple, Complex, Block};
 use failure::Error;
 use futures::Future;
 use log::*;
@@ -48,10 +48,9 @@ impl Backend for Clickhouse {
             .get_handle()
             .and_then(move |c| c.query(&sql[..]).fetch_all())
             .from_err()
-            .and_then(move |(_, block)| {
+            .and_then(move |(_, block): (_, Block<Complex>)| {
                 let timing = time_start.elapsed();
                 info!("Time for sql execution: {}.{:03}", timing.as_secs(), timing.subsec_millis());
-                //debug!("Block: {:?}", block);
 
                 Ok(block_to_df(block)?)
             });
