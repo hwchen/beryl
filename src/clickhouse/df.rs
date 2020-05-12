@@ -193,6 +193,25 @@ macro_rules! def_column_builder {
                                     .collect(),
                             ),
                         )),
+                        SqlType::Array(SqlType::String) => {
+                            let mut column_data = Vec::with_capacity(block.row_count());
+
+                            for row in src_column.iter::<Vec<&[u8]>>()? {
+                                let mut row_data: Vec<String> = vec![];
+
+                                for source in row {
+                                    let text = String::from_utf8(source.into())?;
+                                    row_data.push(text);
+                                }
+
+                                column_data.push(row_data);
+                            }
+
+                            Ok(Column::new(
+                                src_column.name().to_owned(),
+                                ColumnData::ArrayText(column_data)
+                            ))
+                        },
                         s => bail!("{} is not supported by Beryl", s),
                     }
                 }

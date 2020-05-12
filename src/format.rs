@@ -79,6 +79,8 @@ fn format_csv(headers: &[String], df: DataFrame) -> Result<String, Error> {
                 ColumnData::NullableFloat32(ref ns) => ns[row_idx].map(|n| n.to_string()).unwrap_or("".into()),
                 ColumnData::NullableFloat64(ref ns) => ns[row_idx].map(|n| n.to_string()).unwrap_or("".into()),
                 ColumnData::NullableText(ref ss) =>    ss[row_idx].clone().unwrap_or("".into()),
+
+                ColumnData::ArrayText(ref ss) => ss[row_idx].join(";"),
             };
 
             row_buf.push(val);
@@ -141,6 +143,8 @@ fn format_jsonrecords(headers: &[String], df: DataFrame, metadata: HashMap<Strin
                 ColumnData::NullableFloat32(ref ns) => ns[row_idx].map(|n| n.clone().into()).unwrap_or(Value::Null),
                 ColumnData::NullableFloat64(ref ns) => ns[row_idx].map(|n| n.clone().into()).unwrap_or(Value::Null),
                 ColumnData::NullableText(ref ss) =>    ss[row_idx].clone().map(|n| n.into()).unwrap_or(Value::Null),
+
+                ColumnData::ArrayText(ref ss) =>    ss[row_idx].clone().into(),
             };
 
             row.insert(&headers[col_idx], val);
@@ -223,6 +227,8 @@ fn format_jsonarrays(headers: &[String], df: DataFrame) -> Result<String, Error>
                 ColumnData::NullableFloat32(ref ns) => ns[row_idx].map(|n| n.clone().into()).unwrap_or(Value::Null),
                 ColumnData::NullableFloat64(ref ns) => ns[row_idx].map(|n| n.clone().into()).unwrap_or(Value::Null),
                 ColumnData::NullableText(ref ss) =>    ss[row_idx].clone().map(|n| n.into()).unwrap_or(Value::Null),
+
+                ColumnData::ArrayText(ref ss) => ss[row_idx].clone().into(),
             };
 
             row.push(val);

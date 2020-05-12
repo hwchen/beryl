@@ -41,6 +41,8 @@ impl DataFrame {
                 ColumnData::NullableFloat32(ref ns) => ns.len(),
                 ColumnData::NullableFloat64(ref ns) => ns.len(),
                 ColumnData::NullableText(ref ss) => ss.len(),
+
+                ColumnData::ArrayText(ref ss) => ss.len(),
             }
         } else {
             0
@@ -91,4 +93,6 @@ pub enum ColumnData {
     NullableFloat32(Vec<Option<f32>>),
     NullableFloat64(Vec<Option<f64>>),
     NullableText(Vec<Option<String>>),
+
+    ArrayText(Vec<Vec<String>>)
 }
