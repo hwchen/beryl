@@ -7,7 +7,7 @@ version = "0.1.0"
 [dependencies]
 actix = "0.7.7"
 actix-web = "0.7.19"
-clickhouse-rs = "0.1.19"
+clickhouse-rs = "0.1.20"
 csv = "1.0.7"
 failure = "0.1.5"
 futures = "0.1.26"
