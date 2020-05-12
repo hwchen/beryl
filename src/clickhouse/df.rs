@@ -193,6 +193,106 @@ macro_rules! def_column_builder {
                                     .collect(),
                             ),
                         )),
+                        SqlType::Array(SqlType::UInt8) => {
+                            let column_data: Vec<Vec<u8>> = src_column.iter::<Vec<u8>>()?.map(|u| {
+                                u.into_iter().copied().collect()
+                            }).collect();
+
+                            Ok(Column::new(
+                                src_column.name().to_owned(),
+                                ColumnData::ArrayUInt8(column_data),
+                            ))
+                        },
+                        SqlType::Array(SqlType::UInt16) => {
+                            let column_data: Vec<Vec<u16>> = src_column.iter::<Vec<u16>>()?.map(|u| {
+                                u.into_iter().copied().collect()
+                            }).collect();
+
+                            Ok(Column::new(
+                                src_column.name().to_owned(),
+                                ColumnData::ArrayUInt16(column_data),
+                            ))
+                        },
+                        SqlType::Array(SqlType::UInt32) => {
+                            let column_data: Vec<Vec<u32>> = src_column.iter::<Vec<u32>>()?.map(|u| {
+                                u.into_iter().copied().collect()
+                            }).collect();
+
+                            Ok(Column::new(
+                                src_column.name().to_owned(),
+                                ColumnData::ArrayUInt32(column_data),
+                            ))
+                        },
+                        SqlType::Array(SqlType::UInt64) => {
+                            let column_data: Vec<Vec<u64>> = src_column.iter::<Vec<u64>>()?.map(|u| {
+                                u.into_iter().copied().collect()
+                            }).collect();
+
+                            Ok(Column::new(
+                                src_column.name().to_owned(),
+                                ColumnData::ArrayUInt64(column_data),
+                            ))
+                        },
+                        SqlType::Array(SqlType::Int8) => {
+                            let column_data: Vec<Vec<i8>> = src_column.iter::<Vec<i8>>()?.map(|u| {
+                                u.into_iter().copied().collect()
+                            }).collect();
+
+                            Ok(Column::new(
+                                src_column.name().to_owned(),
+                                ColumnData::ArrayInt8(column_data),
+                            ))
+                        },
+                        SqlType::Array(SqlType::Int16) => {
+                            let column_data: Vec<Vec<i16>> = src_column.iter::<Vec<i16>>()?.map(|u| {
+                                u.into_iter().copied().collect()
+                            }).collect();
+
+                            Ok(Column::new(
+                                src_column.name().to_owned(),
+                                ColumnData::ArrayInt16(column_data),
+                            ))
+                        },
+                        SqlType::Array(SqlType::Int32) => {
+                            let column_data: Vec<Vec<i32>> = src_column.iter::<Vec<i32>>()?.map(|u| {
+                                u.into_iter().copied().collect()
+                            }).collect();
+
+                            Ok(Column::new(
+                                src_column.name().to_owned(),
+                                ColumnData::ArrayInt32(column_data),
+                            ))
+                        },
+                        SqlType::Array(SqlType::Int64) => {
+                            let column_data: Vec<Vec<i64>> = src_column.iter::<Vec<i64>>()?.map(|u| {
+                                u.into_iter().copied().collect()
+                            }).collect();
+
+                            Ok(Column::new(
+                                src_column.name().to_owned(),
+                                ColumnData::ArrayInt64(column_data),
+                            ))
+                        },
+                        SqlType::Array(SqlType::Float32) => {
+                            let column_data: Vec<Vec<f32>> = src_column.iter::<Vec<f32>>()?.map(|u| {
+                                u.into_iter().copied().collect()
+                            }).collect();
+
+                            Ok(Column::new(
+                                src_column.name().to_owned(),
+                                ColumnData::ArrayFloat32(column_data),
+                            ))
+                        },
+                        SqlType::Array(SqlType::Float64) => {
+                            let column_data: Vec<Vec<f64>> = src_column.iter::<Vec<f64>>()?.map(|u| {
+                                u.into_iter().copied().collect()
+                            }).collect();
+
+                            Ok(Column::new(
+                                src_column.name().to_owned(),
+                                ColumnData::ArrayFloat64(column_data),
+                            ))
+                        },
                         SqlType::Array(SqlType::String) => {
                             let mut column_data = Vec::with_capacity(block.row_count());
 

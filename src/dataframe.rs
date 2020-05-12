@@ -41,7 +41,16 @@ impl DataFrame {
                 ColumnData::NullableFloat32(ref ns) => ns.len(),
                 ColumnData::NullableFloat64(ref ns) => ns.len(),
                 ColumnData::NullableText(ref ss) => ss.len(),
-
+                ColumnData::ArrayInt8(ref ns) => ns.len(),
+                ColumnData::ArrayInt16(ref ns) => ns.len(),
+                ColumnData::ArrayInt32(ref ns) => ns.len(),
+                ColumnData::ArrayInt64(ref ns) => ns.len(),
+                ColumnData::ArrayUInt8(ref ns) => ns.len(),
+                ColumnData::ArrayUInt16(ref ns) => ns.len(),
+                ColumnData::ArrayUInt32(ref ns) => ns.len(),
+                ColumnData::ArrayUInt64(ref ns) => ns.len(),
+                ColumnData::ArrayFloat32(ref ns) => ns.len(),
+                ColumnData::ArrayFloat64(ref ns) => ns.len(),
                 ColumnData::ArrayText(ref ss) => ss.len(),
             }
         } else {
@@ -93,6 +102,15 @@ pub enum ColumnData {
     NullableFloat32(Vec<Option<f32>>),
     NullableFloat64(Vec<Option<f64>>),
     NullableText(Vec<Option<String>>),
-
+    ArrayInt8(Vec<Vec<i8>>),
+    ArrayInt16(Vec<Vec<i16>>),
+    ArrayInt32(Vec<Vec<i32>>),
+    ArrayInt64(Vec<Vec<i64>>),
+    ArrayUInt8(Vec<Vec<u8>>),
+    ArrayUInt16(Vec<Vec<u16>>),
+    ArrayUInt32(Vec<Vec<u32>>),
+    ArrayUInt64(Vec<Vec<u64>>),
+    ArrayFloat32(Vec<Vec<f32>>),
+    ArrayFloat64(Vec<Vec<f64>>),
     ArrayText(Vec<Vec<String>>)
 }
